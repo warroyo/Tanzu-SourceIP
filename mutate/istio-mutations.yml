@@ -1,0 +1,67 @@
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: add-lb-class-istio
+spec:
+  applyTo:
+  - groups: [""]
+    kinds: ["Service"]
+    versions: ["v1"]
+  match:
+    scope: Namespaced
+    namespaces:
+    - istio-system
+    labelSelector:
+      matchLabels:
+        app: istio-ingressgateway
+  location: "spec.loadBalancerClass"
+  parameters:
+    assign:
+      value: ako.vmware.com/avi-lb
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: AssignMetadata
+metadata:
+  name: add-l4rule
+spec:
+  match:
+    kinds:
+    - apiGroups: [""]
+      kinds: ["Service"]
+    scope: Namespaced
+    namespaces:
+    - istio-system
+    labelSelector:
+      matchLabels:
+        app: istio-ingressgateway
+  location: 'metadata.annotations."ako.vmware.com/l4rule"'
+  parameters:
+    assign:
+      value: proxy-protocol
+---
+apiVersion: mutations.gatekeeper.sh/v1
+kind: Assign
+metadata:
+  name: add-gateway-config
+spec:
+  applyTo:
+  - groups: ["apps"]
+    kinds: ["Deployment"]
+    versions: ["v1"]
+  match:
+    name: istio-ingressgateway
+    kinds:
+    - apiGroups: ["*"]
+      kinds: ["Deployment"]
+    scope: Namespaced
+    namespaces:
+    - istio-system
+    labelSelector:
+      matchLabels:
+        app: istio-ingressgateway
+  location: 'spec.template.metadata.annotations."proxy.istio.io/config"'
+  parameters:
+    assign:
+      value: |
+        gatewayTopology:
+          numTrustedProxies: 2

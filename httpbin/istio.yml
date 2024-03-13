@@ -1,0 +1,33 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: httpbin
+  namespace: tsm
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - httpbin.tsm.onprem.ct-tap.azure.warroyo.com
+    port:
+      name: http
+      number: 80
+      protocol: http
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: httpbin
+  namespace: tsm
+spec:
+  hosts:
+   - httpbin.tsm.onprem.ct-tap.azure.warroyo.com
+  gateways:
+  - httpbin
+  http:
+  - route:
+    - destination:
+        host: httpbin
+        port:
+          number: 8000
